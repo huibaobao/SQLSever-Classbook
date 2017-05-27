@@ -1,0 +1,52 @@
+--创建账户信息表(user)、交易信息表(trans)
+create table user(cardID char(4) primary key,                          --卡号
+                  uName char(8),                                       --顾客姓名
+                  uMoney money constraint ck_uMoney check(uMoney>=1))  --当前余额
+go
+create table trans(cardID char(4),                                          --卡号
+                   Type char(4),                                            --交易类型(存入/支取)
+                   tMoney money,                                            --交易金额
+                   tDate datetime constraint df_tDate default(getdate()))   --交易日期
+go
+
+
+--插入测试数据：张明1000元，李宏1元
+insert into user values('1001','张明',1000)
+insert into user values('1002','李宏',1)
+go
+
+
+--创建实现存取款时，会触发的触发器：
+create trigger trig_trans
+on trans
+after insert
+as
+begin
+  if @tType='存入'
+     declare @tMoney money
+     select @tMoney from inserted
+     update userset uMoney=uMoney+@tMoney where cardID=@cardID
+  else
+     update user set uMoney=uMoney-@tMoney where cardID=@cardID
+  print '交易成功！交易金额:'+convert(varchar(20),@tMoney)
+end
+go
+
+
+--测试数据：
+begin transaction 
+insert into trans(cardID,tType,tMoney) values('1001','支取',200)
+--select 5/0
+if @@error!=0						-- 如果出现错误，将回滚
+    rollback
+insert into trans(cardID,tType,tMoney) values('1002','存入',500)
+select 5/0
+if @@error!=0						-- 如果出现错误，将回滚
+    rollback
+commit
+go
+
+--查看结果
+select * from user
+select * from trans
+go

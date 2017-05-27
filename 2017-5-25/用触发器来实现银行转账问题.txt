@@ -1,0 +1,15 @@
+首先创建一个极其简单的银行表（bank），其中有2个账户A和B，分别存入了2000元和3000元。
+create database test
+
+use test
+
+Create Table bank
+(
+	account varchar(20) not null primary key,		-- 账户，主键
+	ammount money							-- 存款数目
+)
+
+insert into bank values('A', 2000)					-- 账户A有存款 2000元
+insert into bank values('B', 3000) 					-- 账户B有存款 3000元
+
+select * from bank
